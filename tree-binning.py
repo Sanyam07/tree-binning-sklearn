@@ -16,6 +16,8 @@ def bin(val, thresholds):
     else:
         return result
 
+#### Begin Tree Binner
+
 class TreeBinner(BaseEstimator, TransformerMixin):
     """Bins using a Decision Tree
     """
@@ -35,6 +37,9 @@ class TreeBinner(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         validation.check_is_fitted(self, 'thresholds_')
         return np.array([bin(x, self.thresholds_) for x in X])
+
+
+#### End Tree Binner
 
 
 iris = datasets.load_iris()
