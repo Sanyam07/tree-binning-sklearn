@@ -5,14 +5,19 @@ from sklearn.utils import validation
 from sklearn.preprocessing import Binarizer
 
 def bin(val, thresholds):
-    result = -1
+    result = None
     for i in range(len(thresholds)):
-        if val >= thresholds[i]:
-            result = i
-    if result == -1:
+        if i == 0:
+            if val >=  val < thresholds[i]:
+                result = i
+        else:
+            if val >= thresholds[i-1] and val < thresholds[i]:
+                result = i
+    if result == None:
         return len(thresholds)
     else:
         return result
+
 
 class EqualFreqBinner(BaseEstimator, TransformerMixin):
     """Write documentation here.
@@ -30,7 +35,7 @@ class EqualFreqBinner(BaseEstimator, TransformerMixin):
         self._percentiles = [100.0 - (p_step * i) for i in range(self.num_bins)]
 
     def fit(self, X, y=None):
-        self.thresholds_ = np.sort(np.percentile(X, self._percentiles))
+        self.thresholds_ = np.sort(np.percentile(X, self._percentiles))[:-1]
         return self
 
     def transform(self, X, y=None):
@@ -40,13 +45,13 @@ class EqualFreqBinner(BaseEstimator, TransformerMixin):
 
 # Test it out!
 
-a = np.arange(300) - 150
-np.random.shuffle(a)
-print a
-
-efb = EqualFreqBinner(num_bins=7)
-b = efb.fit_transform(a)
-print b
+# a = np.arange(300) - 150
+# np.random.shuffle(a)
+# print a
+#
+# efb = EqualFreqBinner(num_bins=7)
+# b = efb.fit_transform(a)
+# print b
 
 # print
 # print

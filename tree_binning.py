@@ -7,11 +7,15 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn import datasets
 
 def bin(val, thresholds):
-    result = -1
+    result = None
     for i in range(len(thresholds)):
-        if val >= thresholds[i]:
-            result = i
-    if result == -1:
+        if i == 0:
+            if val >=  val < thresholds[i]:
+                result = i
+        else:
+            if val >= thresholds[i-1] and val < thresholds[i]:
+                result = i
+    if result == None:
         return len(thresholds)
     else:
         return result
@@ -41,14 +45,14 @@ class TreeBinner(BaseEstimator, TransformerMixin):
 
 #### End Tree Binner
 
-
-iris = datasets.load_iris()
-
-X = iris.data[:,0]
-print np.min(X), np.max(X)
-X.shape = (150, 1)
-
-tb = TreeBinner()
-f1 = tb.fit_transform(X, iris.target)
-print 'Thresholds', tb.thresholds_
-print f1
+# 
+# iris = datasets.load_iris()
+#
+# X = iris.data[:,0]
+# print np.min(X), np.max(X)
+# X.shape = (150, 1)
+#
+# tb = TreeBinner()
+# f1 = tb.fit_transform(X, iris.target)
+# print 'Thresholds', tb.thresholds_
+# print f1
