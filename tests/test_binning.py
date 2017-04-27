@@ -11,7 +11,7 @@ from sklearn import datasets
 rng = np.random.RandomState(0)
 
 def test_equal_freq_binner():
-    X_ = np.arange(25)
+    X_ = np.arange(25).reshape((25, 1))
     np.random.shuffle(X_)
 
     efb = EqualFreqBinner(num_bins=5)
