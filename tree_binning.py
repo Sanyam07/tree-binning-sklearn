@@ -3,10 +3,14 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import validation
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import OneHotEncoder
+
 
 from sklearn import datasets
 
 def bin(val, thresholds):
+    """
+    """
     result = None
     for i in range(len(thresholds)):
         if i == 0:
@@ -26,8 +30,9 @@ class TreeBinner(BaseEstimator, TransformerMixin):
     """Bins using a Decision Tree
     """
 
-    def __init__(self, max_depth=3):
+    def __init__(self, max_depth=3, one_hot=False):
         self.max_depth = max_depth
+        self.one_hot = one_hot
 
     def fit(self, X, y):
         # TODO should we check that X is 1 column?
@@ -40,19 +45,23 @@ class TreeBinner(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         validation.check_is_fitted(self, 'thresholds_')
-        return np.array([bin(x, self.thresholds_) for x in X])
+        binned = np.array([bin(x, self.thresholds_) for x in X]).reshape((len(X),1))
+        if self.one_hot:
+            ohe = OneHotEncoder()
+            return ohe.fit_transform(binned).toarray()
+        else:
+            return binned
 
 
 #### End Tree Binner
 
-# 
 # iris = datasets.load_iris()
 #
 # X = iris.data[:,0]
 # print np.min(X), np.max(X)
 # X.shape = (150, 1)
 #
-# tb = TreeBinner()
+# tb = TreeBinner(one_hot=True)
 # f1 = tb.fit_transform(X, iris.target)
 # print 'Thresholds', tb.thresholds_
 # print f1

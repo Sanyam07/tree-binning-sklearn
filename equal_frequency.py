@@ -2,7 +2,7 @@ import numpy as np
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import validation
-from sklearn.preprocessing import Binarizer
+from sklearn.preprocessing import OneHotEncoder
 
 def bin(val, thresholds):
     result = None
@@ -28,8 +28,9 @@ class EqualFreqBinner(BaseEstimator, TransformerMixin):
         Number of equally sized bins to split the feature into.
     """
 
-    def __init__(self, num_bins=10):
+    def __init__(self, num_bins=10, one_hot=False):
         self.num_bins = num_bins
+        self.one_hot = one_hot
 
         p_step = 100.0 / float(self.num_bins)
         self._percentiles = [100.0 - (p_step * i) for i in range(self.num_bins)]
@@ -40,7 +41,13 @@ class EqualFreqBinner(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         validation.check_is_fitted(self, 'thresholds_')
-        return np.array([bin(x, self.thresholds_) for x in X])
+        binned = np.array([bin(x, self.thresholds_) for x in X]).reshape((len(X),1))
+        if self.one_hot:
+            ohe = OneHotEncoder()
+            return ohe.fit_transform(binned).toarray()
+        else:
+            return binned
+
 
 
 # Test it out!
@@ -49,13 +56,15 @@ class EqualFreqBinner(BaseEstimator, TransformerMixin):
 # np.random.shuffle(a)
 # print a
 #
-# efb = EqualFreqBinner(num_bins=7)
+# efb = EqualFreqBinner(num_bins=7, one_hot=True)
 # b = efb.fit_transform(a)
 # print b
 
 # print
 # print
 #
+
+# from sklearn.preprocessing import Binarizer
 # r = np.random.rand(3, 3)
 # print r
 # bin = Binarizer(threshold=0.5)
