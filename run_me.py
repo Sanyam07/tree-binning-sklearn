@@ -64,7 +64,6 @@ def getScore(binning_method, column_index, num_bins, X, y):
             
             binner = binning_method(one_hot = False)   
             binned_feat = binner.fit_transform(feat_to_bin.reshape(-1, 1), y.reshape(-1, 1))
-            print 'binned_feat has shape', binned_feat.shape
         
         else:
             
@@ -81,7 +80,7 @@ def getScore(binning_method, column_index, num_bins, X, y):
         
     # Split expanded data
     X_train, X_test, y_train, y_test = train_test_split(
-            x, y, test_size=0.01, random_state=234)
+            x, y, test_size=0.40, random_state=234, n_jobs = 4)
 
         
     # Initialize model
@@ -91,7 +90,7 @@ def getScore(binning_method, column_index, num_bins, X, y):
     model.fit(X_train, y_train) #Train X, Train Y
     
     # get mean cross validated score
-    cv_scores = cross_val_score(model, x, y, cv = 5)
+    cv_scores = cross_val_score(model, x, y, cv = 5, n_jobs = 4)
     
     # get test score
     test_score = model.score(X_test, y_test)
@@ -105,17 +104,21 @@ def getScore(binning_method, column_index, num_bins, X, y):
 
 # ------------------------------------------------------------------------- #
 #           Let's see baseline accuracy for the data sets
+#               ... and also do some testing on TreeBinner
 # ------------------------------------------------------------------------- #
 
 cv_scores, test_score = getScore(None, None, None, wine[:, 1:], wine[:, 0])
 print "Wine CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
 print "Wine Test Score:", test_score, "\n"
-# now with some binning...
-cv_scores, test_score = getScore(EqualFreqBinner, 0, 25, wine[:, 1:], wine[:, 0])
-print "Wine CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
-print "Wine Test Score:", test_score, "\n"
 
-# ------------
+# now with some binning... Try each column in wine with TreeBinner
+for col in np.arange(0, 12, 1):
+    print col
+    cv_scores, test_score = getScore(TreeBinner, col, num_bins, wine[:, 1:], wine[:, 0])
+    print "Wine CV Accuracy at: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
+    print "Wine Test Score:", test_score, "\n"
+
+# ------------------------------------------------------------------------- #
 cv_scores,test_score = getScore(None, None, None, glass[:, 0:-1], glass[:, -1])
 print "Glass CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
 print "Glass Test Score:", test_score, "\n"
@@ -127,6 +130,7 @@ print "Iris Test Score:", test_score, "\n"
 cv_scores, test_score = getScore(None, None, None, heart[:, 0:-1], heart[:, -1])
 print "Heart Disease Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
 print "Heart Disease Test Score:", test_score, "\n"
+
 
 
 # ------------------------------------------------------------------------- #
@@ -144,6 +148,13 @@ equalwidth = {}
 equalfreq = {}
 tree = {}
 
+table = np.zeros((4,4))
+row_idx = 0
+
+for data in datasets:
+    print row_idx
+    table[row_idx, 0] = score
+
 for data in datasets:
     
     print 'Getting baseline score for', data
@@ -152,29 +163,36 @@ for data in datasets:
     cv_scores, test_score = getScore(None, None, None, 
                                      datasets[data][0], datasets[data][1])
     base[data] = np.mean(cv_scores), test_score
-        
-    print 'Equal width binning on first feature column... ' # ------------ #
+    table[row_idx, 0] = np.mean(cv_scores)
+   
+    print 'Equal width binning on feature column... ' # ------------ #
     
     column_index = 0
-    num_bins = 4
+    num_bins = 10
     cv_scores, test_score = getScore(EqualWidthBinner, column_index, num_bins,
                                      datasets[data][0], datasets[data][1])
     
     equalwidth[data] = np.mean(cv_scores)
-              
-    print 'Equal frequency binning on first feature column... ' # -------- #
+    table[row_idx, 1] = np.mean(cv_scores)
+       
+    print 'Equal frequency binning on feature column... ' # -------- #
     
     cv_scores, test_score = getScore(EqualFreqBinner, column_index, num_bins,
                                      datasets[data][0], datasets[data][1])
 
     equalfreq[data] = np.mean(cv_scores)
-             
-    print 'TREE BINNING wooo on first feature column... ' # -------------- #
+    table[row_idx, 2] = np.mean(cv_scores)
+        
+    print 'TREE BINNING wooo on feature column... ' # -------------- #
     
     cv_scores, test_score = getScore(TreeBinner, column_index, num_bins,
                                      datasets[data][0], datasets[data][1])
 
     tree[data] = np.mean(cv_scores)
+    table[row_idx, 4] = np.mean(cv_scores)
+
+    row_idx = row_idx + 1
+
     print "# --------------------- # \n"
 
 print "baseline:", base.values(), "\n", "Equal Width:", equalwidth.values(), "\n",
