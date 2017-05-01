@@ -57,14 +57,17 @@ cv_scores, test_score = getScore(None, None, None, wine[:, 1:], wine[:, 0])
 print "Wine CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
 print "Wine Test Score:", test_score, "\n"
 
-cv_scores, test_score = getScore(TreeBinner, 0, None, wine[:, 1:], wine[:, 0])
-print "Wine CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
-print "Wine Test Score:", test_score, "\n"
-
-cv_scores, test_score = getScore(EqualWidthBinner, 0, 5, cancer[:, 0:-1], cancer[:, -1])
+cv_scores, test_score = getScore(TreeBinner, True, 0, None, cancer[:, 0:-1], cancer[:, -1])
 print "Cancer CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
 print "Cancer Test Score:", test_score, "\n"
 
+cv_scores, test_score = getScore(EqualWidthBinner, True, 0, 5, cancer[:, 0:-1], cancer[:, -1])
+print "Cancer CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
+print "Cancer Test Score:", test_score, "\n"
+
+cv_scores, test_score = getScore(EqualFreqBinner, True, 0, 5, cancer[:, 0:-1], cancer[:, -1])
+print "Cancer CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
+print "Cancer Test Score:", test_score, "\n"
 # now with some binning... Try each column in wine with ~ All Methods ~
 
 wine_cols = range(0, 13)
@@ -93,7 +96,7 @@ cancer_table = np.zeros((5,9))
 cancertab = scoreColumnByMethod(cancer[:, 0:-1], cancer[:, -1], cancer_cols, cancer_table, 3)
 plotScoreByColumn("Cancer", cancertab, cancertab[0,:])
 # ------------------------------------------------------------------------- #
-cv_scores,test_score = getScore(None, None, None, glass[:, 0:-1], glass[:, -1])
+cv_scores,test_score = getScore(None, None, None,one_hot, glass[:, 0:-1], glass[:, -1])
 print "Glass CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
 print "Glass Test Score:", test_score, "\n"
 

@@ -18,7 +18,7 @@ from equal_frequency import *
 #               Scoring Function
 # ------------------------------------------------------------------------- #
 
-def getScore(binning_method, column_index, num_bins, X, y): 
+def getScore(binning_method, one_hot, column_index, num_bins, X, y): 
     from sklearn.preprocessing import PolynomialFeatures
 
     # do timing
@@ -32,18 +32,29 @@ def getScore(binning_method, column_index, num_bins, X, y):
         
         if binning_method == TreeBinner:
             
-            binner = binning_method()   
+            binner = binning_method(one_hot=one_hot)
             binned_feat = binner.fit_transform(feat_to_bin.reshape(-1, 1), y.reshape(-1, 1))
-        
+            print 'Binned_feat in Treebinner', binned_feat.shape
         else:
             
-            binner = binning_method(num_bins)   
+            binner = binning_method(num_bins, one_hot=one_hot)   
             binned_feat = binner.fit_transform(feat_to_bin)            
-            
-        # delete original column, insert binned column into position
-        X = np.delete(X, column_index, axis = 1)
-        X = np.insert(X, column_index, binned_feat, axis=1)
+            print 'Binnedfeat in binner is', binned_feat.shape
         
+        print 'binnedfeat shape:',binned_feat.shape
+
+
+        # if OneHotEncoding, need to insert several columns, so make index range
+        
+        if one_hot:
+
+            X = np.concatenate((X[:,0:-column_index], binned_feat,X[:,column_index:]), axis=1)
+        else:
+            # delete original column
+            X = np.delete(X, column_index, axis = 1)
+            # insert binned column(s) into position    
+            X = np.insert(X, column_index, binned_feat, axis=1)
+
     # want to take features and get all interaction terms
     x = PolynomialFeatures(interaction_only = True) # include_bias = should be F?
     x = x.fit_transform(X)
