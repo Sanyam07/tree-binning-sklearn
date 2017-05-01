@@ -87,10 +87,7 @@ class EqualWidthBinner(BaseEstimator, TransformerMixin):
             return binned
         return binned
    
-# Hmm -- multiclass.unique_labels: useful here?
-    #Helper function to extract an ordered array of unique labels 
-    #from different formats of target.
-
+"""
 # ------- Testing ----------------------- # 
 def plot_dist(data):
     # look at plot of transformed values
@@ -119,3 +116,4 @@ freqs = np.unique(da, return_counts=True)[1]
 print 'Frequencies in bins:', freqs
 print 'First col in OHE should have sum of frequencies from not OHE:', np.sum(dat[:,0]) == freqs[0]
 print '3rd col in OHE should have sum of frequencies from notOHE:', np.sum(dat[:,3]) == freqs[3]
+"""
