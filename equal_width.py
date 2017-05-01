@@ -20,11 +20,9 @@ def bin(data, val, thresholds):
 
         if i == 0:
             if val >= val < thresholds[i]:
-                # result = thresholds[i]
                 result = i
         else:
             if val >= thresholds[i-1] and val < thresholds[i]:
-                # result = thresholds[i]
                 result = i
 
     return result
@@ -54,11 +52,12 @@ class EqualWidthBinner(BaseEstimator, TransformerMixin):
     
     """
     
-    def __init__(self, num_bins=10):
+    def __init__(self, num_bins=10, one_hot=False):
         if num_bins <= 0:
             raise ValueError("num_bins = {0} cannot be less than or equal to zero.".format(num_bins))        
         
         self.num_bins = num_bins
+        self.one_hot = one_hot
 
            
     def fit(self, X, y=None):
@@ -82,12 +81,18 @@ class EqualWidthBinner(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         """Add doc
         """
-        return np.array([bin(X, x, self.thresholds_) for x in X])
+        binned = np.array([bin(X, x, self.thresholds_) for x in X])
+        if self.one_hot:
+            ohe = OneHotEncoder()
+            return ohe.fit_transform(binned).toarray()
+        else:
+            return binned
+        return binned
    
 # Hmm -- multiclass.unique_labels: useful here?
     #Helper function to extract an ordered array of unique labels 
     #from different formats of target.
-
+'''
 # ------- Testing ----------------------- # 
 def plot_dist(data):
     # look at plot of transformed values
@@ -112,3 +117,4 @@ plot_dist(data)
 print 'Count of bins should equal', num_bins, 'and we have', len(np.unique(equal_width.transform(data)))
 print 'Bins:', np.unique(equal_width.transform(data))
 print 'Frequencies:',np.unique(equal_width.transform(data), return_counts=True)[1]
+'''
