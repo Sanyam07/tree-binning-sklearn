@@ -28,7 +28,7 @@ class EqualFreqBinner(BaseEstimator, TransformerMixin):
         Number of equally sized bins to split the feature into.
     """
 
-    def __init__(self, num_bins=10, one_hot=False):
+    def __init__(self, num_bins=10, one_hot=True):
         self.num_bins = num_bins
         self.one_hot = one_hot
 
@@ -41,14 +41,14 @@ class EqualFreqBinner(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         validation.check_is_fitted(self, 'thresholds_')
-        binned = np.array([bin(x, self.thresholds_) for x in X]).reshape((len(X),1))
+        binned = np.array([bin(x, self.thresholds_) for x in X]) #.reshape((len(X),1))
+        
         if self.one_hot:
-            ohe = OneHotEncoder()
-            return ohe.fit_transform(binned).toarray()
-        else:
-            return binned
+            ohe = OneHotEncoder(sparse = False)
+            return ohe.fit_transform(binned.reshape(-1,1))
 
-
+        return binned
+        
 
 # Test it out!
 

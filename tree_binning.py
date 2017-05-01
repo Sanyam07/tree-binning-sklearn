@@ -9,20 +9,22 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn import datasets
 
 def bin(val, thresholds):
-    """
-    """
     result = None
     for i in range(len(thresholds)):
+
         if i == 0:
-            if val >=  val < thresholds[i]:
+            if val >= val < thresholds[i]:
                 result = i
         else:
             if val >= thresholds[i-1] and val < thresholds[i]:
                 result = i
+        
     if result == None:
         return len(thresholds)
+    
     else:
         return result
+
 
 #### Begin Tree Binner
 
@@ -30,7 +32,7 @@ class TreeBinner(BaseEstimator, TransformerMixin):
     """Bins using a Decision Tree
     """
 
-    def __init__(self, max_depth=3, one_hot=False):
+    def __init__(self, max_depth=3, one_hot=True):
         self.max_depth = max_depth
         self.one_hot = one_hot
 
@@ -45,12 +47,11 @@ class TreeBinner(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         validation.check_is_fitted(self, 'thresholds_')
-        binned = np.array([bin(x, self.thresholds_) for x in X]).reshape((len(X),1))
+        binned = np.array([bin(x, self.thresholds_) for x in X]).reshape(-1,1)#.reshape((len(X),1))
         if self.one_hot:
-            ohe = OneHotEncoder()
-            return ohe.fit_transform(binned).toarray()
-        else:
-            return binned
+            ohe = OneHotEncoder(sparse = False)
+            return ohe.fit_transform(binned.reshape(-1,1))      
+        return binned
 
 
 #### End Tree Binner
