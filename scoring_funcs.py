@@ -23,7 +23,7 @@ def getScore(binning_method, column_index, num_bins, X, y):
 
     # do timing
     
-    
+    print 'Operating on X with shape', X.shape, 'with y of dim', y.shape
     # perform binning on selected column and return transformed feature array
     if binning_method != None:
         
@@ -47,11 +47,11 @@ def getScore(binning_method, column_index, num_bins, X, y):
     # want to take features and get all interaction terms
     x = PolynomialFeatures(interaction_only = True) # include_bias = should be F?
     x = x.fit_transform(X)
+    print 'X, with binned feat, has shape', X.shape, 'then transformed to include interaction terms, has shape', x.shape
         
     # Split expanded data
     X_train, X_test, y_train, y_test = train_test_split(
             x, y, test_size=0.40, random_state=234)
-
         
     # Initialize model
     model = LogisticRegression(penalty = 'l1', random_state = 123)
@@ -64,7 +64,6 @@ def getScore(binning_method, column_index, num_bins, X, y):
     
     # get test score
     test_score = model.score(X_test, y_test)
-    
     
     print 'there are', x.shape[1],'features &', len(np.argwhere(model.coef_ != 0)), 'coefficients != 0.'
        
