@@ -28,6 +28,15 @@ def bin(val, thresholds):
 
 class TreeBinner(BaseEstimator, TransformerMixin):
     """Bins using a Decision Tree
+
+    Parameters
+    ----------
+    max_depth : int (3 by default)
+        Max depth of the tree used to bin the feature.
+
+    one_hot : bool, optional (False by default)
+        If True, returns the binned input feature a one hot encoded
+        n-dimentional array.
     """
 
     def __init__(self, max_depth=3, one_hot=False):
