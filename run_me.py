@@ -3,17 +3,17 @@
 """
 Created on Sun Apr 23 15:17:40 2017
 
-@author: mm94998
+@author: Martha Miller
 """
+
 import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split, cross_val_score
-#import timeit as timeit
-from sklearn.preprocessing import PolynomialFeatures
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
 
-#from plotting import *
+from scoring_funcs import *
+from plotting import *
+
+# import scripts to do binning... not yet incorporated into sklearn
 from equal_width import *
 from tree_binning import *
 from equal_frequency import *
@@ -38,69 +38,16 @@ iris_target = iris["target"]
 
 
 heart = np.genfromtxt(path + 'heart.txt', delimiter = ',')
-# heart has NaNs. Want to find the 6 cases w missing values and operate on
-nas = np.argwhere(np.isnan(heart))
-# not sure what imputation method makes sense; in the interest of progress...
-# how about we do a complete case analysis and just remove these rows.
-heart = np.delete(heart, nas[:,0], axis=0)
-# check for NAs
+# NaNs: how about we do a complete case analysis and just remove these rows.
+heart = np.delete(heart, np.argwhere(np.isnan(heart)), axis=0)
 print 'Heart data now contains', np.sum(np.isnan(heart)),'nans.'
 
-# ------------------------------------------------------------------------- #
-#               Scoring Function
-# ------------------------------------------------------------------------- #
-
-def getScore(binning_method, column_index, num_bins, X, y): 
-    # do timing
-    
-    
-    # perform binning on selected column and return transformed feature array
-    if binning_method != None:
-        
-        # isolate column
-        feat_to_bin = X[:, column_index]
-        
-        if binning_method == TreeBinner:
-            
-            binner = binning_method(one_hot = False)   
-            binned_feat = binner.fit_transform(feat_to_bin.reshape(-1, 1), y.reshape(-1, 1))
-        
-        else:
-            
-            binner = binning_method(num_bins)   
-            binned_feat = binner.fit_transform(feat_to_bin)            
-            
-        # delete original column, insert binned column into position
-        X = np.delete(X, column_index, axis = 1)
-        X = np.insert(X, column_index, binned_feat, axis=1)
-        
-    # want to take features and get all interaction terms
-    x = PolynomialFeatures(interaction_only = True) # include_bias = should be F?
-    x = x.fit_transform(X)
-        
-    # Split expanded data
-    X_train, X_test, y_train, y_test = train_test_split(
-            x, y, test_size=0.40, random_state=234, n_jobs = 4)
-
-        
-    # Initialize model
-    model = LogisticRegression(penalty = 'l1', random_state = 123)
-
-    # fit model object    
-    model.fit(X_train, y_train) #Train X, Train Y
-    
-    # get mean cross validated score
-    cv_scores = cross_val_score(model, x, y, cv = 5, n_jobs = 4)
-    
-    # get test score
-    test_score = model.score(X_test, y_test)
-    
-    
-    print 'there are', x.shape[1],'features &', len(np.argwhere(model.coef_ != 0)), 'coefficients != 0.'
-       
-    return cv_scores, test_score #,runtime
-
-
+cancer = np.genfromtxt(path + 'breast_cancer_wisc.txt', delimiter = ',')
+# remove first column: ID number
+cancer = cancer[:, 1:]
+# Remove NaNs: Complete Cases
+cancer = np.delete(cancer, np.argwhere(np.isnan(cancer)), axis=0)
+print 'Breast Cancer data now contains', np.sum(np.isnan(cancer)),'nans.'
 
 # ------------------------------------------------------------------------- #
 #           Let's see baseline accuracy for the data sets
@@ -111,12 +58,33 @@ cv_scores, test_score = getScore(None, None, None, wine[:, 1:], wine[:, 0])
 print "Wine CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
 print "Wine Test Score:", test_score, "\n"
 
-# now with some binning... Try each column in wine with TreeBinner
-for col in np.arange(0, 12, 1):
-    print col
-    cv_scores, test_score = getScore(TreeBinner, col, num_bins, wine[:, 1:], wine[:, 0])
-    print "Wine CV Accuracy at: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
-    print "Wine Test Score:", test_score, "\n"
+cv_scores, test_score = getScore(EqualWidthBinner, 0, 5, cancer[:, 0:-1], cancer[:, -1])
+print "Cancer CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
+print "Cancer Test Score:", test_score, "\n"
+
+# now with some binning... Try each column in wine with ~ All Methods ~
+
+
+wine_cols = range(0, 13)
+wine_table = np.zeros((5, 13))
+winetab = scoreColumnByMethod(wine[:, 1:], wine[:, 0], wine_cols, wine_table, 10)
+plotScoreByColumn("Wine", winetab, winetab[0, :])
+
+# try other data sets... all appropriate columns X each method
+heart_cols =[0,3,4,7,9]
+heart_table = np.zeros((5, 5))
+hearttab = scoreColumnByMethod(heart[:, 0:-1], heart[:, -1], heart_cols, heart_table, 10)
+plotScoreByColumn("Heart", hearttab, hearttab[0, :])
+
+glass_cols = [0,1,2,3,4,5,6,7,8]
+glass_table = np.zeros((5, 9))
+glasstab = scoreColumnByMethod(glass[:, 0:-1], glass[:, -1], glass_cols, glass_table, 10)
+plotScoreByColumn("Glass", glasstab, glasstab[0, :])
+
+iris_cols =[0,1,2,3]
+iris_table = np.zeros((5, 4))
+iristab = scoreColumnByMethod( iris_features, iris_target, iris_cols, iris_table, 10)
+plotScoreByColumn("Iris", iristab, iristab[0, :])
 
 # ------------------------------------------------------------------------- #
 cv_scores,test_score = getScore(None, None, None, glass[:, 0:-1], glass[:, -1])
@@ -140,20 +108,15 @@ print "Heart Disease Test Score:", test_score, "\n"
 datasets = {'Wine': (wine[:, 1:], wine[:, 0]), 
             'Glass': (glass[:, 0:-1], glass[:, -1]),
             'Iris': (iris_features, iris_target),
-            'Heart': (heart[:, 0:-1], heart[:, -1])}
+            'Heart': (heart[:, 0:-1], heart[:, -1]),
+            'Cancer': (cancer[:, 0:-1], cancer[:, -1])}
 
 # initialize empty dicts to store scores
 base = {}
 equalwidth = {}
 equalfreq = {}
 tree = {}
-
-table = np.zeros((4,4))
-row_idx = 0
-
-for data in datasets:
-    print row_idx
-    table[row_idx, 0] = score
+cancer = {}
 
 for data in datasets:
     
