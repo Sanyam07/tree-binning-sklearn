@@ -18,10 +18,10 @@ def bin(val, thresholds):
         else:
             if val >= thresholds[i-1] and val < thresholds[i]:
                 result = i
-        
+
     if result == None:
         return len(thresholds)
-    
+
     else:
         return result
 
@@ -46,7 +46,6 @@ class TreeBinner(BaseEstimator, TransformerMixin):
         self.one_hot = one_hot
 
     def fit(self, X, y):
-        # TODO should we check that X is 1 column?
         self.decision_tree_ = DecisionTreeClassifier(max_depth=self.max_depth)
         self.decision_tree_.fit(X, y)
         self.thresholds_ = self.decision_tree_.tree_.threshold
@@ -59,7 +58,7 @@ class TreeBinner(BaseEstimator, TransformerMixin):
         binned = np.array([bin(x, self.thresholds_) for x in X]).reshape(-1,1)#.reshape((len(X),1))
         if self.one_hot:
             ohe = OneHotEncoder(sparse = False)
-            return ohe.fit_transform(binned.reshape(-1,1))      
+            return ohe.fit_transform(binned.reshape(-1,1))
         return binned
 
 
