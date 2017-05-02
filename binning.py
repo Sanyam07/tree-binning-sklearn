@@ -72,10 +72,19 @@ class BinnerMixin(object):
         """
         validation.check_is_fitted(self, 'thresholds_')
         check_is_column(X)
+
         binned = np.array([self.bin_value(x) for x in X]).reshape(-1, 1)
         if getattr(self, 'one_hot', False):
+            missing_levels = np.setdiff1d(
+                np.arange(len(self.thresholds_+1)),
+                np.unique(binned)
+            )
+            zero_col = np.repeat(0, X.shape[0])
+
             ohe = OneHotEncoder(sparse = False)
-            return ohe.fit_transform(binned)
+            binned = ohe.fit_transform(binned)
+            for c in missing_levels:
+                binned = np.insert(binned, c, zero_col.copy(), axis=1)
         return binned
 
 

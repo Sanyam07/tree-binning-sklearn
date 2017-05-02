@@ -41,12 +41,5 @@ WITH dat AS (
 )
 SELECT *
 FROM dat
-WHERE f1 IS NOT NULL and f1 != ''
-    and f2 IS NOT NULL and f2 != ''
-    and f3 IS NOT NULL and f3 != ''
-    and f4 IS NOT NULL and f4 != ''
-    and f5 IS NOT NULL and f5 != ''
-    and f6 IS NOT NULL and f6 != ''
-    and f7 IS NOT NULL and f7 != ''
-    and f8 IS NOT NULL
-    and f9 IS NOT NULL;
+WHERE f1 != '' and f2 != '' and f3 != '' and f4 != '' 
+    and f5 != '' and f6 != '' and f7 != '';
