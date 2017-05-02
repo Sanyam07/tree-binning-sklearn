@@ -79,7 +79,7 @@ class EqualWidthBinner(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         """Add doc
         """
-        binned = np.array([bin(x, self.thresholds_) for x in X])reshape(-1,1) #.reshape((len(X),1))
+        binned = np.array([bin(x, self.thresholds_) for x in X]).reshape(-1,1) #.reshape((len(X),1))
         if self.one_hot:
             ohe = OneHotEncoder(sparse = False)
             return np.array(ohe.fit_transform(binned.reshape(-1,1)))

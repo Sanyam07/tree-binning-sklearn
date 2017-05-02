@@ -47,7 +47,7 @@ class TreeBinner(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         validation.check_is_fitted(self, 'thresholds_')
-        binned = np.array([bin(x, self.thresholds_) for x in X]).reshape(-1,1)#.reshape((len(X),1))
+        binned = np.array([bin(x, self.thresholds_) for x in X]).reshape(-1,1) #.reshape((len(X),1))
         if self.one_hot:
             ohe = OneHotEncoder(sparse = False)
             return ohe.fit_transform(binned.reshape(-1,1))      
