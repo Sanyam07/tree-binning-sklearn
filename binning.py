@@ -116,8 +116,8 @@ class EqualFreqBinner(BaseEstimator, TransformerMixin, BinnerMixin):
         self._percentiles = [100.0 - (p_step * i) for i in range(self.num_bins)]
 
     def fit(self, X, y=None):
-        """Fit the binner by setting thresholds_ in a way that splits X into
-        evenly sized bins.
+        """Fits the binner by setting thresholds_ in a way that splits X into
+        evenly populated bins.
 
         Parameters
         ----------
@@ -176,7 +176,8 @@ class EqualWidthBinner(BaseEstimator, TransformerMixin, BinnerMixin):
 
 
     def fit(self, X, y=None):
-        """Fit the binner by setting thresholds_ in a way that splits X into
+        """Fits the binner by setting thresholds_ in a way that splits X into
+        equally spaced intervals.
 
         Parameters
         ----------
@@ -227,7 +228,7 @@ class TreeBinner(BaseEstimator, TransformerMixin, BinnerMixin):
         self.one_hot = one_hot
 
     def fit(self, X, y):
-        """Fit the binner by setting thresholds_ to the split points created
+        """Fits the binner by setting thresholds_ to the split points created
         by training an univariate decision tree.
 
         Parameters
