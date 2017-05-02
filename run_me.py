@@ -134,6 +134,11 @@ for data in datasets:
     print "# --------------------- # \n"
 
       
+scores = np.concatenate((np.asarray(base).reshape(5,1), 
+                         np.asarray(cubic).reshape(5,1),
+                         np.asarray(equalwidth).reshape(5,1),
+                         np.asarray(equalfreq).reshape(5,1),
+                         np.asarray(tree).reshape(5,1)), axis = 1)
 
 
 # ------------------------------------------------------------------------- #
@@ -162,5 +167,14 @@ plt.ylabel('Mean 5-Fold Cross-Validated Accuracy')
 #plt.show()
 plt.savefig("../Figures/AccuracyAll_8bins_has2nd.pdf")
 
-
+base_timings = []
+cubic = []
+cubic_timings = []
+equalwidth = []
+equalwidth_timings = []
+equalfreq = []
+equalfreq_timings = []
+tree = []
+tree_timings = []
+datalist = []
 
