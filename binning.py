@@ -6,6 +6,15 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import OneHotEncoder
 
 def check_is_column(X):
+    """Checks that X is an n-dimentional array with 1 column. If X is a one
+    dimentional array, it is reshaped into a the expected shape. If X contains
+    more than 1 column, and error is thrown.
+
+    Parameters
+    ----------
+    X : array-like
+        Array to check, or reshape, into a single column.
+    """
     if len(X.shape) == 1:
         # log a warning?
         return np.reshape(X, (-1, 1))
@@ -16,11 +25,20 @@ def check_is_column(X):
 
 
 class BinnerMixin(object):
-    """TODO: Write Me!
-    """
+    """Mixin class for all binners."""
+
 
     def bin_value(self, val):
-        """
+        """Return the bin a value should fall in based on thresholds_.
+
+        Parameters
+        ----------
+        val : value to bin
+
+        Returns
+        -------
+        binned_val : int
+            Bin number
         """
         validation.check_is_fitted(self, 'thresholds_')
         result = None
@@ -37,7 +55,20 @@ class BinnerMixin(object):
             return result
 
     def transform(self, X, y=None):
-        """TODO: Write Me!
+        """Returns either a column of bin values resulting from binning
+        X using thresholds_, or multiple indicator columns resulting from
+        binning X using thresholds_ and then one-hot encoding.
+
+        Parameters
+        ----------
+        X : array-like
+            n-dimentional array with 1 column to transform into a bins.
+
+        Returns
+        -------
+        binned : array-like
+            Array of bin values. If object contains the one_hot attribure
+            and it is equal to True, then returns multiple indicator columns.
         """
         validation.check_is_fitted(self, 'thresholds_')
         check_is_column(X)
@@ -85,6 +116,19 @@ class EqualFreqBinner(BaseEstimator, TransformerMixin, BinnerMixin):
         self._percentiles = [100.0 - (p_step * i) for i in range(self.num_bins)]
 
     def fit(self, X, y=None):
+        """Fits the binner by setting thresholds_ in a way that splits X into
+        evenly populated bins.
+
+        Parameters
+        ----------
+        X : array-like
+            n-dimentional array with 1 column to fit the binner.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
         X = check_is_column(X)
         self.thresholds_ = np.sort(np.percentile(X, self._percentiles))[:-1]
         return self
@@ -132,16 +176,18 @@ class EqualWidthBinner(BaseEstimator, TransformerMixin, BinnerMixin):
 
 
     def fit(self, X, y=None):
-        """Fit equal-width binner
+        """Fits the binner by setting thresholds_ in a way that splits X into
+        equally spaced intervals.
 
         Parameters
         ----------
-        x : array-like of shape (n_samples,)
-            feature vector.
+        X : array-like
+            n-dimentional array with 1 column to fit the binner.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns self.
         """
         self.interval_ = float(np.max(X) - np.min(X)) / self.num_bins
         self.thresholds_ = [np.min(X) + (self.interval_ * bin) for bin in range(self.num_bins)][1:]
@@ -182,6 +228,22 @@ class TreeBinner(BaseEstimator, TransformerMixin, BinnerMixin):
         self.one_hot = one_hot
 
     def fit(self, X, y):
+        """Fits the binner by setting thresholds_ to the split points created
+        by training an univariate decision tree.
+
+        Parameters
+        ----------
+        X : array-like
+            n-dimentional array with 1 column to fit the binner.
+
+        y : array-like
+            A one dimentional array of class labels.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
         X = check_is_column(X)
         self.decision_tree_ = DecisionTreeClassifier(max_depth=self.max_depth)
         self.decision_tree_.fit(X, y)
