@@ -29,53 +29,53 @@ def bin(val, thresholds):
 
 class EqualWidthBinner(BaseEstimator, TransformerMixin):
     """Bin a continuous variable into bins at uniformly-spaced intervals.
-    
+
     Parameters
     ----------
     num_bins : how many bins are desired? Default = 10.
-    
-    
+
+
     Attributes
     ----------
     interval_ : spacing of cutpoints. Equal to range of X / num_bins
     thresholds_ : array of thresholds used to separate intervals
-    
-    
+
+
     Examples
     --------
     >>> from equal-width import *
-    >>> 
+    >>>
     >>> binned = EqualWidthBinner()
     >>> binned.thresholds_
     array([]) ....... work on this later
-    
+
     """
-    
+
     def __init__(self, num_bins=10, one_hot=True):
         if num_bins <= 0:
-            raise ValueError("num_bins = {0} cannot be less than or equal to zero.".format(num_bins))        
-        
+            raise ValueError("num_bins = {0} cannot be less than or equal to zero.".format(num_bins))
+
         self.num_bins = num_bins
         self.one_hot = one_hot
 
-           
+
     def fit(self, X, y=None):
         """Fit equal-width binner
-        
+
         Parameters
         ----------
         x : array-like of shape (n_samples,)
             feature vector.
-            
+
         Returns
         -------
         self : returns an instance of self.
         """
-        self.interval_ = (np.max(X) - np.min(X)) / (self.num_bins - 1)
-        self.thresholds_ = [(np.min(X)+1) + (self.interval_ * bin) for bin in range(self.num_bins)]
+        self.interval_ = float(np.max(X) - np.min(X)) / self.num_bins
+        self.thresholds_ = [np.min(X) + (self.interval_ * bin) for bin in range(self.num_bins)][1:]
 
         return self
-    
+
     def transform(self, X, y=None):
         """Add doc
         """
@@ -86,9 +86,20 @@ class EqualWidthBinner(BaseEstimator, TransformerMixin):
         else:
             return binned
         return binned
-   
+
+
+
+X = np.arange(6)
+print X
+
+ewb = EqualWidthBinner(3, one_hot=False)
+binned = ewb.fit_transform(X)
+print binned
+
+
+
 """
-# ------- Testing ----------------------- # 
+# ------- Testing ----------------------- #
 def plot_dist(data):
     # look at plot of transformed values
     plt.hist(equal_width.transform(data))
@@ -101,11 +112,11 @@ def plot_dist(data):
 data = np.random.randn(1000,1)
 
 # Look at behavior of function when OHE is turned on/off
-# want to see same encodings in feat x, 
+# want to see same encodings in feat x,
 # OHE == off we get one col with bins, OHE==on we get num_bins columns with 0,1s
 num_bins = 6
-OHE = EqualWidthBinner(num_bins, one_hot = True) 
-notOHE = EqualWidthBinner(num_bins, one_hot = False) 
+OHE = EqualWidthBinner(num_bins, one_hot = True)
+notOHE = EqualWidthBinner(num_bins, one_hot = False)
 dat = OHE.fit_transform(data)
 da = notOHE.fit_transform(data)
 

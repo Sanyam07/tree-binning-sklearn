@@ -26,6 +26,20 @@ class EqualFreqBinner(BaseEstimator, TransformerMixin):
     ----------
     num_bins : int (10 by default)
         Number of equally sized bins to split the feature into.
+
+    one_hot : bool, optional (False by default)
+        If True, returns the binned input feature a one hot encoded
+        n-dimentional array.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.arange(30)
+    >>> X
+    array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+           17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+    >>> 
+
     """
 
     def __init__(self, num_bins=10, one_hot=True):
