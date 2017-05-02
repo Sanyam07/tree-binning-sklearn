@@ -26,6 +26,23 @@ def test_equal_freq_binner():
     assert_equal(X_bin.shape, (25,5))
     assert_equal(np.sum(X_bin), 25)
 
+def test_equal_width_binner():
+    X_ = np.arange(25).reshape(-1, 1)
+    np.random.shuffle(X_)
+
+    tb = EqualWidthBinner(num_bins=5, one_hot=False)
+    X_bin = tb.fit_transform(X_)
+    assert_equal(np.sum(X_bin == 0), 5)
+    assert_equal(np.sum(X_bin == 1), 5)
+    assert_equal(np.sum(X_bin == 2), 5)
+    assert_equal(np.sum(X_bin == 3), 5)
+    assert_equal(np.sum(X_bin == 4), 5)
+
+    tb = EqualWidthBinner(num_bins=5)
+    X_bin = tb.fit_transform(X_)
+    assert_equal(X_bin.shape, (25,5))
+    assert_equal(np.sum(X_bin), 25)
+
 def test_tree_binner():
     X_ = np.arange(25).reshape((25, 1))
     y_ = np.repeat(np.arange(5), 5, axis=0)
@@ -44,4 +61,5 @@ def test_tree_binner():
     assert_equal(np.sum(X_bin), 25)
 
 test_equal_freq_binner()
+test_equal_width_binner()
 test_tree_binner()
