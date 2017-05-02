@@ -7,16 +7,15 @@ Created on Sun Apr 23 15:17:40 2017
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
 
 from scoring_funcs import *
-from plotting import *
+#from plotting import *
 
 # import scripts to do binning... not yet incorporated into sklearn
-from equal_width import *
-from tree_binning import *
-from equal_frequency import *
+from binning import *
+import time
 
 # ------------------------------------------------------------------------- #
 #                   load datasets
@@ -39,7 +38,7 @@ iris_target = iris["target"]
 heart = np.genfromtxt(path + 'heart.txt', delimiter = ',')
 # NaNs: how about we do a complete case analysis and just remove these rows.
 heart = np.delete(heart, np.argwhere(np.isnan(heart)), axis=0)
-print 'Heart data now contains', np.sum(np.isnan(heart)),'nans.'
+print ('Heart data now contains', np.sum(np.isnan(heart)),'nans.')
 
 cancer = np.genfromtxt(path + 'breast_cancer_wisc.txt', delimiter = ',')
 # remove first column: ID number
@@ -48,178 +47,130 @@ cancer = cancer[:, 1:]
 cancer = np.delete(cancer, np.argwhere(np.isnan(cancer)), axis=0)
 print 'Breast Cancer data now contains', np.sum(np.isnan(cancer)),'nans.'
 
-# ------------------------------------------------------------------------- #
-#           Let's see baseline accuracy for the data sets
-#               ... and also do some testing on TreeBinner
-# ------------------------------------------------------------------------- #
-
-cv_scores, test_score = getScore(None, None, None, wine[:, 1:], wine[:, 0])
-print "Wine CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
-print "Wine Test Score:", test_score, "\n"
-
-cv_scores, test_score = getScore(TreeBinner, True, 0, None, cancer[:, 0:-1], cancer[:, -1])
-print "Cancer CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
-print "Cancer Test Score:", test_score, "\n"
-
-cv_scores, test_score = getScore(EqualWidthBinner, True, 0, 5, cancer[:, 0:-1], cancer[:, -1])
-print "Cancer CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
-print "Cancer Test Score:", test_score, "\n"
-
-cv_scores, test_score = getScore(EqualFreqBinner, True, 0, 5, cancer[:, 0:-1], cancer[:, -1])
-print "Cancer CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
-print "Cancer Test Score:", test_score, "\n"
-# now with some binning... Try each column in wine with ~ All Methods ~
-
 wine_cols = range(0, 13)
-wine_table = np.zeros((5, 13))
-winetab = scoreColumnByMethod(wine[:, 1:], wine[:, 0], wine_cols, wine_table, 10)
-plotScoreByColumn("Wine", winetab, winetab[0, :])
-
-# try other data sets... all appropriate columns X each method
 heart_cols =[0,3,4,7,9]
-heart_table = np.zeros((5, 5))
-hearttab = scoreColumnByMethod(heart[:, 0:-1], heart[:, -1], heart_cols, heart_table, 10)
-plotScoreByColumn("Heart", hearttab, hearttab[0, :])
-
-glass_cols = [0,1,2,3,4,5,6,7,8]
-glass_table = np.zeros((5, 9))
-glasstab = scoreColumnByMethod(glass[:, 0:-1], glass[:, -1], glass_cols, glass_table, 10)
-plotScoreByColumn("Glass", glasstab, glasstab[0, :])
-
+cancer_cols = np.arange(0,9)                                           
 iris_cols =[0,1,2,3]
-iris_table = np.zeros((5, 4))
-iristab = scoreColumnByMethod( iris_features, iris_target, iris_cols, iris_table, 10)
-plotScoreByColumn("Iris", iristab, iristab[0, :])
-
-cancer_cols = np.arange(0,9)
-cancer_table = np.zeros((5,9))
-cancertab = scoreColumnByMethod(cancer[:, 0:-1], cancer[:, -1], cancer_cols, cancer_table, 3)
-plotScoreByColumn("Cancer", cancertab, cancertab[0,:])
-# ------------------------------------------------------------------------- #
-cv_scores,test_score = getScore(None, None, None,one_hot, glass[:, 0:-1], glass[:, -1])
-print "Glass CV Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
-print "Glass Test Score:", test_score, "\n"
-
-cv_scores, test_score = getScore(None, None, None, iris_features, iris_target)
-print "Iris Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
-print "Iris Test Score:", test_score, "\n"
-
-cv_scores, test_score = getScore(None, None, None, heart[:, 0:-1], heart[:, -1])
-print "Heart Disease Accuracy: %0.2f (+/- %0.2f)" % (cv_scores.mean(), cv_scores.std() * 2)
-print "Heart Disease Test Score:", test_score, "\n"
-
-
+glass_cols = [0,1,2,3,4,5,6,7,8]
+                                               
 
 # ------------------------------------------------------------------------- #
 #                   Bin and Score Data 
 # ------------------------------------------------------------------------- #
  # store name, with feature vector and target
-datasets = {'Wine': (wine[:, 1:], wine[:, 0]), 
-            'Glass': (glass[:, 0:-1], glass[:, -1]),
-            'Iris': (iris_features, iris_target),
-            'Heart': (heart[:, 0:-1], heart[:, -1]),
-            'Cancer': (cancer[:, 0:-1], cancer[:, -1])}
+datasets = {'Wine': (wine[:, 1:], wine[:, 0], wine_cols), 
+            'Glass': (glass[:, 0:-1], glass[:, -1], glass_cols),
+            'Iris': (iris_features, iris_target, iris_cols),
+            'Heart': (heart[:, 0:-1], heart[:, -1], heart_cols),
+            'Cancer': (cancer[:, 0:-1], cancer[:, -1], cancer_cols)}
 
 # initialize empty dicts to store scores
-base = {}
-equalwidth = {}
-equalfreq = {}
-tree = {}
-cancer = {}
+base = []
+base_timings = []
+secondorder = []
+secondorder_timings= []
+cubic = []
+cubic_timings = []
+equalwidth = []
+equalwidth_timings = []
+equalfreq = []
+equalfreq_timings = []
+tree = []
+tree_timings = []
+datalist = []
 
 for data in datasets:
     
+    datalist.append(data)
+    
+    num_bins = 8
     print 'Getting baseline score for', data
     
-    # store mean CV score from baseline
-    cv_scores, test_score = getScore(None, None, None, 
-                                     datasets[data][0], datasets[data][1])
-    base[data] = np.mean(cv_scores), test_score
-    table[row_idx, 0] = np.mean(cv_scores)
-   
+    start = time.time()
+    cv_scores = getScore(None, False, None, None, 
+                                     datasets[data][0], datasets[data][1], None)
+    base_timings.append(time.time() - start)
+    mean = np.mean(cv_scores)
+    base.append(mean)
+    
+    print '2nd order expansion for', data
+    start = time.time()
+    cv_scores = getScore(None, False, None, None, datasets[data][0], datasets[data][1], 2)
+    secondorder_timings.append(time.time() - start)
+    mean = np.mean(cv_scores)
+    secondorder.append(mean)
+
+    print 'Cubic expansion for', data
+    start = time.time()
+    cv_scores = getScore(None, False, None, None, datasets[data][0], datasets[data][1], 3)
+    cubic_timings.append(time.time() - start)
+    mean = np.mean(cv_scores)
+    cubic.append(mean)
+
     print 'Equal width binning on feature column... ' # ------------ #
+    print datasets[data][2]
+    start = time.time()
+    cv_scores = getScore(EqualWidthBinner, True, 
+                                     datasets[data][2], num_bins, 
+                                             datasets[data][0], datasets[data][1], None)
+    equalwidth_timings.append(time.time() - start)
     
-    column_index = 0
-    num_bins = 10
-    cv_scores, test_score = getScore(EqualWidthBinner, column_index, num_bins,
-                                     datasets[data][0], datasets[data][1])
-    
-    equalwidth[data] = np.mean(cv_scores)
-    table[row_idx, 1] = np.mean(cv_scores)
+    mean = np.mean(cv_scores)
+    equalwidth.append(mean) 
+
        
     print 'Equal frequency binning on feature column... ' # -------- #
+    start = time.time()
+    cv_scores = getScore(EqualFreqBinner, True, datasets[data][2], num_bins,
+                                     datasets[data][0], datasets[data][1], None)
     
-    cv_scores, test_score = getScore(EqualFreqBinner, column_index, num_bins,
-                                     datasets[data][0], datasets[data][1])
-
-    equalfreq[data] = np.mean(cv_scores)
-    table[row_idx, 2] = np.mean(cv_scores)
-        
+    equalfreq_timings.append(time.time() - start)
+    
+    mean = np.mean(cv_scores)
+    equalfreq.append(mean)
+    
     print 'TREE BINNING wooo on feature column... ' # -------------- #
     
-    cv_scores, test_score = getScore(TreeBinner, column_index, num_bins,
-                                     datasets[data][0], datasets[data][1])
-
-    tree[data] = np.mean(cv_scores)
-    table[row_idx, 4] = np.mean(cv_scores)
-
-    row_idx = row_idx + 1
+    start = time.time()
+    cv_scores = getScore(TreeBinner, True, datasets[data][2], num_bins,
+                                     datasets[data][0], datasets[data][1], None)
+    
+    tree_timings.append(time.time() - start)
+    
+    mean = np.mean(cv_scores)
+    tree.append(mean)
 
     print "# --------------------- # \n"
 
-print "baseline:", base.values(), "\n", "Equal Width:", equalwidth.values(), "\n",
-"Equal Freq", equalfreq.values(),"\n", "and, Tree:",tree.values() 
+      
+
 
 # ------------------------------------------------------------------------- #
 #                   Plot Scores    
 # ------------------------------------------------------------------------- #   
-baselines = [x[0] for x in base.values()]
-equal_width = [x[0] for x in equalwidth.values()]
-equal_freq = [x[0] for x in equalfreq.values()]
-tree_bin = [x[0] for x in tree.values()]
+import matplotlib.pyplot as plt
 
 index = np.arange(len(datasets))    
-bar_width = .2
+bar_width = .13
 
-plt.bar(index - bar_width, baselines, bar_width, label = 'Baseline')
-plt.bar(index, equal_width, bar_width, label = 'Equal Width')
-plt.bar(index + bar_width, equal_freq, bar_width, label = 'Equal Frequency')
-plt.bar(index + (bar_width*2), tree_bin, bar_width, label = 'Tree Binner')
+fig = plt.figure(figsize = (7, 4))
+plt.bar(index - (bar_width *3), base, bar_width, color = 'crimson', label = 'Baseline')
+plt.bar(index - (bar_width *2), secondorder, bar_width, color = 'aqua', label = 'Second Order')
+plt.bar(index - bar_width, cubic, bar_width, color = 'k', label = 'Cubic')
+plt.bar(index, equalwidth, bar_width,color = 'springgreen', label = 'Equal Width')
+plt.bar(index + bar_width, equalfreq, bar_width, color = 'magenta', label = 'Equal Frequency')
+plt.bar(index + (bar_width*2), tree, bar_width, color = 'mediumblue', label = 'Tree Binner')
 
-plt.xticks(index + bar_width / 4, base.keys())
-plt.legend()
-plt.title('Scores by Dataset and Binning Method')
+plt.xticks(index + bar_width / 6, datalist)
+#plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+plt.legend(loc="best")
+plt.ylim(.5, 1)
+plt.title('Scores: 8 Bins')
 plt.xlabel('Dataset')
-plt.ylabel('Mean Cross-Validated Accuracy')
-plt.show()
-
-"""
-# add a table
-table = plt.table(cellText=(bar1, bar2, bar3),
-                  rowLabels=base.keys(),
-                colLabels = ('Base', 'Equal Width', 'Equal Freq', 'Tree'),
-                          loc='bottom')
-table.set_fontsize(12)
+plt.ylabel('Mean 5-Fold Cross-Validated Accuracy')
+#plt.tight_layout()
+#plt.show()
+plt.savefig("../Figures/AccuracyAll_8bins_has2nd.pdf")
 
 
 
-# fake data
-data = np.random.randn(100,3)
-np.random.shuffle(data) 
-
-num_bins = 5
-col_ix = 0
-tobin = data[:, col_ix]
-equal_width = EqualWidthBinner(num_bins)   
-equal_width.fit(tobin)
-binned = equal_width.transform(tobin)
-# delete old and insert new
-data = np.delete(data, col_ix, axis = 1)
-d = np.insert(data, col_ix, binned, axis=1)
-
-plot_dist(data)
-
-print 'Count of bins should equal', num_bins, 'and we have', len(np.unique(equal_width.transform(data)))
-print 'Bins:', np.unique(equal_width.transform(data))
-print 'Frequencies:',np.unique(equal_width.transform(data), return_counts=True)[1]
-"""
