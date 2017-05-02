@@ -67,8 +67,6 @@ datasets = {'Wine': (wine[:, 1:], wine[:, 0], wine_cols),
 # initialize empty dicts to store scores
 base = []
 base_timings = []
-secondorder = []
-secondorder_timings= []
 cubic = []
 cubic_timings = []
 equalwidth = []
@@ -92,13 +90,6 @@ for data in datasets:
     base_timings.append(time.time() - start)
     mean = np.mean(cv_scores)
     base.append(mean)
-    
-    print '2nd order expansion for', data
-    start = time.time()
-    cv_scores = getScore(None, False, None, None, datasets[data][0], datasets[data][1], 2)
-    secondorder_timings.append(time.time() - start)
-    mean = np.mean(cv_scores)
-    secondorder.append(mean)
 
     print 'Cubic expansion for', data
     start = time.time()
@@ -154,8 +145,7 @@ index = np.arange(len(datasets))
 bar_width = .13
 
 fig = plt.figure(figsize = (7, 4))
-plt.bar(index - (bar_width *3), base, bar_width, color = 'crimson', label = 'Baseline')
-plt.bar(index - (bar_width *2), secondorder, bar_width, color = 'aqua', label = 'Second Order')
+plt.bar(index - (bar_width *2), base, bar_width, color = 'crimson', label = 'Baseline')
 plt.bar(index - bar_width, cubic, bar_width, color = 'k', label = 'Cubic')
 plt.bar(index, equalwidth, bar_width,color = 'springgreen', label = 'Equal Width')
 plt.bar(index + bar_width, equalfreq, bar_width, color = 'magenta', label = 'Equal Frequency')
