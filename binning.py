@@ -76,7 +76,7 @@ class BinnerMixin(object):
         binned = np.array([self.bin_value(x) for x in X]).reshape(-1, 1)
         if getattr(self, 'one_hot', False):
             missing_levels = np.setdiff1d(
-                np.arange(len(self.thresholds_+1)),
+                np.arange(len(self.thresholds_)+1),
                 np.unique(binned)
             )
             zero_col = np.repeat(0, X.shape[0])

@@ -58,7 +58,7 @@ print 'DONE ADDING TERMS - Dataset shape:', X_train_binned.shape
 
 # Logistic Regression transformed data
 params_to_tune = {'C' : [0.1, 0.5, 1.0, 2.0]}
-lr= LogisticRegression(penalty='l1', verbose=1)
+lr= LogisticRegression(penalty='l1')
 clf = GridSearchCV(lr, params_to_tune)
 clf.fit(X_train_binned, y_train)
 tr_score = clf.score(X_train_binned, y_train)
