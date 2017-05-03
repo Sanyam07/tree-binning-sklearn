@@ -12,7 +12,7 @@ from binning import *
 import time
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import OneHotEncoder
-
+import math
 
 # ------------------------------------------------------------------------- #
 #               Scoring Function
@@ -64,7 +64,8 @@ def getScore(binning_method, one_hot, column_index, num_bins, X, y, degree):
                 
                 # get binned_feat according to method
                 if binning_method == TreeBinner:
-                    binner = binning_method(one_hot=one_hot)
+                    depth = math.log(num_bins,2)
+                    binner = binning_method(one_hot=one_hot, max_depth = depth)
                     binned_feat = binner.fit_transform(feat_to_bin.reshape(-1, 1), y_train.reshape(-1, 1))
                     binned_feat_test = binner.transform(feat_to_bin_test)
                 else:

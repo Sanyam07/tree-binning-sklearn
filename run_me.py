@@ -7,15 +7,14 @@ Created on Sun Apr 23 15:17:40 2017
 """
 
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
 
 from scoring_funcs import *
-#from plotting import *
 
-# import scripts to do binning... not yet incorporated into sklearn
 from binning import *
 import time
+import pandas as pd 
 
 # ------------------------------------------------------------------------- #
 #                   load datasets
@@ -66,86 +65,149 @@ datasets = {'Wine': (wine[:, 1:], wine[:, 0], wine_cols),
 
 # initialize empty dicts to store scores
 base = []
-base_timings = []
+base_test=[]
+base_preproc_timings = []
+base_score_timings = []
+
 cubic = []
-cubic_timings = []
+cubic_test = []
+cubic_preproc_timings = []
+cubic_score_timings = []
+
 equalwidth = []
-equalwidth_timings = []
+equalwidth_test = []
+equalwidth_preproc_timings = []
+equalwidth_score_timings = []
+
 equalfreq = []
-equalfreq_timings = []
+equalfreq_test = []
+equalfreq_preproc_timings = []
+equalfreq_score_timings = []
+
 tree = []
-tree_timings = []
+tree_test = []
+tree_preproc_timings = []
+tree_score_timings = []
+
 datalist = []
+
 
 for data in datasets:
     
     datalist.append(data)
     
-    num_bins = 8
+    num_bins = 4
     print 'Getting baseline score for', data
     
-    start = time.time()
-    cv_scores = getScore(None, False, None, None, 
-                                     datasets[data][0], datasets[data][1], None)
-    base_timings.append(time.time() - start)
+    cv_scores, test_score, datapreproc_time, score_time  = getScore(None, False, 
+                                None, None, datasets[data][0], datasets[data][1], None)
+
+    base_preproc_timings.append(datapreproc_time)
+    base_score_timings.append(score_time)
+
     mean = np.mean(cv_scores)
     base.append(mean)
+    base_test.append(test_score)
+
+
 
     print 'Cubic expansion for', data
     start = time.time()
-    cv_scores = getScore(None, False, None, None, datasets[data][0], datasets[data][1], 3)
-    cubic_timings.append(time.time() - start)
+    cv_scores, test_score, datapreproc_time, score_time = getScore(None, False, None, None, 
+                                        datasets[data][0], datasets[data][1], 3)
+    cubic_preproc_timings.append(datapreproc_time)
+    cubic_score_timings.append(score_time)
+
     mean = np.mean(cv_scores)
     cubic.append(mean)
+    cubic_test.append(mean)
 
     print 'Equal width binning on feature column... ' # ------------ #
-    print datasets[data][2]
-    start = time.time()
-    cv_scores = getScore(EqualWidthBinner, True, 
-                                     datasets[data][2], num_bins, 
-                                             datasets[data][0], datasets[data][1], None)
-    equalwidth_timings.append(time.time() - start)
-    
-    mean = np.mean(cv_scores)
-    equalwidth.append(mean) 
+    cv_scores, test_score, datapreproc_time, score_time = getScore(EqualWidthBinner, True, 
+                                     datasets[data][2], num_bins, datasets[data][0], 
+                                    datasets[data][1], None)
+    equalwidth_preproc_timings.append(datapreproc_time)
+    equalwidth_score_timings.append(score_time)
 
+    mean = np.mean(cv_scores)
+    equalwidth.append(mean)
+    equalwidth_test.append(test_score)
        
     print 'Equal frequency binning on feature column... ' # -------- #
     start = time.time()
-    cv_scores = getScore(EqualFreqBinner, True, datasets[data][2], num_bins,
+    cv_scores,test_score, datapreproc_time, score_time = getScore(EqualFreqBinner, 
+                                    True, datasets[data][2], num_bins,
                                      datasets[data][0], datasets[data][1], None)
-    
-    equalfreq_timings.append(time.time() - start)
-    
+
+    equalfreq_preproc_timings.append(datapreproc_time)
+    equalfreq_score_timings.append(score_time)
+   
     mean = np.mean(cv_scores)
     equalfreq.append(mean)
-    
+    equalfreq_test.append(test_score)
+
     print 'TREE BINNING wooo on feature column... ' # -------------- #
-    
-    start = time.time()
-    cv_scores = getScore(TreeBinner, True, datasets[data][2], num_bins,
+    cv_scores, test_score, datapreproc_time, score_time = getScore(TreeBinner, 
+                                    True, datasets[data][2], num_bins,
                                      datasets[data][0], datasets[data][1], None)
-    
-    tree_timings.append(time.time() - start)
-    
+    tree_preproc_timings.append(datapreproc_time)
+    tree_score_timings.append(score_time)
+   
     mean = np.mean(cv_scores)
     tree.append(mean)
-
+    tree_test.append(test_score)
+    
     print "# --------------------- # \n"
 
       
-scores = np.concatenate((np.asarray(base).reshape(5,1), 
+scores = np.concatenate((np.asarray(datalist).reshape(5,1),
+        np.asarray(base).reshape(5,1), 
                          np.asarray(cubic).reshape(5,1),
                          np.asarray(equalwidth).reshape(5,1),
                          np.asarray(equalfreq).reshape(5,1),
                          np.asarray(tree).reshape(5,1)), axis = 1)
 
+test = np.concatenate((np.asarray(datalist).reshape(5,1),
+        np.asarray(base_test).reshape(5,1), 
+                         np.asarray(cubic_test).reshape(5,1),
+                         np.asarray(equalwidth_test).reshape(5,1),
+                         np.asarray(equalfreq_test).reshape(5,1),
+                         np.asarray(tree_test).reshape(5,1)), axis = 1)
 
+preproc_times = np.concatenate((np.asarray(datalist).reshape(5,1),
+        np.asarray(base_preproc_timings).reshape(5,1), 
+                         np.asarray(cubic_preproc_timings).reshape(5,1),
+                         np.asarray(equalwidth_preproc_timings).reshape(5,1),
+                         np.asarray(equalfreq_preproc_timings).reshape(5,1),
+                         np.asarray(tree_preproc_timings).reshape(5,1)), axis = 1)
+
+score_times = np.concatenate((np.asarray(datalist).reshape(5,1),
+        np.asarray(base_score_timings).reshape(5,1), 
+                         np.asarray(cubic_score_timings).reshape(5,1),
+                         np.asarray(equalwidth_score_timings).reshape(5,1),
+                         np.asarray(equalfreq_score_timings).reshape(5,1),
+                         np.asarray(tree_score_timings).reshape(5,1)), axis = 1)
+
+headers = ["Dataset", "Base", "Cubic", "EqualWidth", "EqualFreq","Tree"]
+
+df = pd.DataFrame(scores)
+df.columns = headers
+df.to_csv("scores_%dbins.csv"%(num_bins), sep =',')
+
+test = pd.DataFrame(test)
+test.columns = headers
+test.to_csv("Test_%dbins.csv"%(num_bins), sep =',')
+
+timedf = pd.DataFrame(preproc_times)
+timedf.columns = headers
+timedf.to_csv("preproc_times_%dbins.csv"%(num_bins), sep=',')
+
+timedf2 = pd.DataFrame(score_times)
+timedf2.columns = headers
+timedf2.to_csv("score_times_%dbins.csv"%(num_bins), sep=',')
 # ------------------------------------------------------------------------- #
 #                   Plot Scores    
 # ------------------------------------------------------------------------- #   
-import matplotlib.pyplot as plt
-
 index = np.arange(len(datasets))    
 bar_width = .13
 
@@ -157,24 +219,79 @@ plt.bar(index + bar_width, equalfreq, bar_width, color = 'magenta', label = 'Equ
 plt.bar(index + (bar_width*2), tree, bar_width, color = 'mediumblue', label = 'Tree Binner')
 
 plt.xticks(index + bar_width / 6, datalist)
-#plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
 plt.legend(loc="best")
 plt.ylim(.5, 1)
-plt.title('Scores: 8 Bins')
+plt.title('Validation Scores: %d Bins'%(num_bins))
 plt.xlabel('Dataset')
 plt.ylabel('Mean 5-Fold Cross-Validated Accuracy')
-#plt.tight_layout()
 #plt.show()
-plt.savefig("../Figures/AccuracyAll_8bins_has2nd.pdf")
+plt.savefig("../Figures/ValAccuracy_%dbins.pdf"%(num_bins))
 
-base_timings = []
-cubic = []
-cubic_timings = []
-equalwidth = []
-equalwidth_timings = []
-equalfreq = []
-equalfreq_timings = []
-tree = []
-tree_timings = []
-datalist = []
+# Plot Test Score --------------------------------- #
+fig = plt.figure(figsize = (7, 4))
+plt.bar(index - (bar_width *2), base_test, bar_width, color = 'crimson', label = 'Baseline')
+plt.bar(index - bar_width, cubic_test, bar_width, color = 'k', label = 'Cubic')
+plt.bar(index, equalwidth_test, bar_width,color = 'springgreen', label = 'Equal Width')
+plt.bar(index + bar_width, equalfreq_test, bar_width, color = 'magenta', label = 'Equal Frequency')
+plt.bar(index + (bar_width*2), tree_test, bar_width, color = 'mediumblue', label = 'Tree Binner')
 
+plt.xticks(index + bar_width / 6, datalist)
+plt.legend(loc="best")
+plt.ylim(.4, 1)
+plt.title('Test Scores: %d Bins'%(num_bins))
+plt.xlabel('Dataset')
+plt.ylabel('Mean 5-Fold Cross-Validated Accuracy')
+plt.savefig("../Figures/TestAccuracy_%dbins.pdf"%(num_bins))
+
+
+# ---------------- Runtime  ------------------------------------------ #
+
+#  Plot for TIME, get mean from 5-fold
+base_timing = [x / 5 for x in base_preproc_timings]
+cubic_timing= [x / 5 for x in cubic_preproc_timings]
+equalwidth_timing = [x / 5 for x in equalwidth_preproc_timings]
+equalfreq_timing = [x / 5 for x in equalfreq_preproc_timings]
+tree_timing = [x / 5 for x in tree_preproc_timings]
+
+
+plt.bar(index - (bar_width*2), base_timing, bar_width, color = 'crimson', label = 'Baseline')
+plt.bar(index - bar_width, cubic_timing, bar_width, color = 'k', label = 'Cubic')
+plt.bar(index, equalwidth_timing, bar_width, color = 'springgreen', label = 'Equal Width')
+plt.bar(index + bar_width, equalfreq_timing, bar_width, color = 'magenta', label = 'Equal Frequency')
+plt.bar(index + (bar_width*2), tree_timing, bar_width, color = 'mediumblue', label = 'Tree Binner')
+
+plt.xticks(index + bar_width / 6, datalist)
+plt.legend(loc="best")
+
+plt.title('Average Preprocessing Time Required: %d Bins'%(num_bins))
+plt.xlabel('Dataset')
+plt.ylabel('Seconds')
+plt.tight_layout()
+
+#plt.show()
+plt.savefig("../Figures/PreprocessingTime_%d.pdf"%(num_bins))
+
+
+#  Plot for TIME, get mean from 5-fold
+base_timings2 = [x / 5 for x in base_score_timings]
+cubic_timings2= [x / 5 for x in cubic_score_timings]
+equalwidth_timings2 = [x / 5 for x in equalwidth_score_timings]
+equalfreq_timings2 = [x / 5 for x in equalfreq_score_timings]
+tree_timings2 = [x / 5 for x in tree_score_timings]
+
+
+plt.bar(index - (bar_width*2), base_timings2, bar_width, color = 'crimson', label = 'Baseline')
+plt.bar(index - bar_width, cubic_timings2, bar_width, color = 'k', label = 'Cubic')
+plt.bar(index, equalwidth_timings2, bar_width, color = 'springgreen', label = 'Equal Width')
+plt.bar(index + bar_width, equalfreq_timings2, bar_width, color = 'magenta', label = 'Equal Frequency')
+plt.bar(index + (bar_width*2), tree_timings2, bar_width, color = 'mediumblue', label = 'Tree Binner')
+
+plt.xticks(index + bar_width / 6, datalist)
+plt.legend(loc="best")
+plt.title('Average Scoring Time Required: %d Bins'%(num_bins))
+plt.xlabel('Dataset')
+plt.ylabel('Seconds')
+plt.tight_layout()
+
+#plt.show()
+plt.savefig("../Figures/ScoringTime_%d.pdf"%(num_bins))
