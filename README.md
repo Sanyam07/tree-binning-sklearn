@@ -1,5 +1,8 @@
 # Binning in Scikit Learn
 
+_The project does NOT contain any of the data required to run the code
+in the project. See below for websites where the datasets can be obtained._
+
 ## Requirements
 
 The code in this repo runs on Python 2.7.x and requires the following
@@ -24,10 +27,20 @@ project directory: `python run_me.py`
 The conversion model code can be run using the following command from the
 project directory: `python conversion.py`
 
-_The conversion model dataset is not distributed with this project._
+_The conversion model dataset is not distributed with this project, as it is
+owned by MassMutual._
 
+## Datasets
 
-## test_size
+All datasets must be placed in the `datasets` folder, and named as listed below.
+
+- glass.txt - [UIC link](https://archive.ics.uci.edu/ml/datasets/Glass+Identification)
+- heart.txt - [UIC link](https://archive.ics.uci.edu/ml/datasets/Heart+Disease)
+- iris.txt - [UIC link](https://archive.ics.uci.edu/ml/datasets/Iris)
+- wine.txt - [UIC link](https://archive.ics.uci.edu/ml/datasets/Wine)
+- breast_cancer_wisc.txt - [UIC link](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Diagnostic))
+
+## Tests
 
 To run the unit tests of the scikit-learn classes written for this project,
 you will need to run the test script as a package using *python 3*.
